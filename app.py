@@ -9,18 +9,31 @@ app = Flask(__name__)
 CORS(app, origins=[
     'http://localhost:3000',  # développement local
     'https://*.vercel.app',   # domaines Vercel
-    'https://mycar-frontend.vercel.app'  # ton domaine spécifique
-])
+    'https://mycar-frontend.vercel.app',  # ton domaine spécifique
+    'https://my-car-main.vercel.app',  # nom possible du projet
+    'https://mycar-main.vercel.app'   # autre nom possible
+], supports_credentials=True)
 
 # Chargez votre modèle et vos encodeurs
 try:
-    model = joblib.load('model/car_price_model.joblib')
-    encoders = joblib.load('model/encoders.joblib')
-except:
-    print("Warning: Model files not found. Prediction will return dummy data.")
+    model = joblib.load('car_price_model.joblib')
+    encoders = joblib.load('encoders.joblib')
+    scaler = joblib.load('scaler.joblib')
+    print("Model files loaded successfully!")
+except Exception as e:
+    print(f"Warning: Model files not found: {e}. Prediction will return dummy data.")
 
 # Ajoutez une constante pour le taux de conversion (à mettre à jour régulièrement)
 USD_TO_TND_RATE = 3.12  # exemple de taux
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        'status': 'healthy',
+        'model_loaded': 'model' in globals(),
+        'encoders_loaded': 'encoders' in globals(),
+        'timestamp': datetime.now().isoformat()
+    })
 
 @app.route('/predict', methods=['POST'])
 def predict():
